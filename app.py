@@ -29,16 +29,11 @@ teacher (maximum one sentence):"""
 
 # ===== 匿名化 =====
 def deidentify(df, tutor_name, student_name):
-    processor = TextPreprocessor()
-    known_names = [tutor_name, student_name]
-    df = processor.anonymize_known_names(
-        df=df, text_column="text", names=known_names,
-        replacement_names=["[TUTOR]", "[STUDENT]"]
-    )
-    df = processor.anonymize_known_names(
-        df=df, text_column="user", names=known_names,
-        replacement_names=["tutor", "student"]
-    )
+    df = df.copy()
+    df["text"] = df["text"].str.replace(tutor_name, "[TUTOR]", regex=False)
+    df["text"] = df["text"].str.replace(student_name, "[STUDENT]", regex=False)
+    df["user"] = df["user"].str.replace(tutor_name, "tutor", regex=False)
+    df["user"] = df["user"].str.replace(student_name, "student", regex=False)
     return df
 
 # ===== 会話フォーマット =====
