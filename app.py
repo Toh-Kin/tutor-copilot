@@ -1,7 +1,6 @@
 import streamlit as st
 import openai
 import pandas as pd
-from edu_convokit.preprocessors import TextPreprocessor
 
 # ===== 設定 =====
 st.set_page_config(page_title="Tutor CoPilot", page_icon="🌟", layout="centered")
