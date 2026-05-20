@@ -1,6 +1,11 @@
 import streamlit as st
 import openai
 import pandas as pd
+import os
+from langchain_community.document_loaders import PyPDFLoader
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+from langchain_community.vectorstores import FAISS
 
 # ===== 設定 =====
 st.set_page_config(
@@ -10,6 +15,7 @@ st.set_page_config(
 )
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+PDF_PATH = "指導要領.pdf"  # ← GitHubにアップロードしたPDFのファイル名に合わせる
 
 GRADE_INFO = {
     "小学1年": "Grade 1 (age 6-7): Numbers up to 100, addition and subtraction within 20. Use very simple words and concrete examples like fingers or physical objects.",
@@ -28,6 +34,29 @@ STRATEGIES = [
     "Affirm correct attempt",
     "Provide a similar problem",
 ]
+
+# ===== RAG：指導要領DBの構築（初回のみ）=====
+@st.cache_resource
+def build_vectorstore():
+    if not os.path.exists(PDF_PATH):
+        return None
+    loader = PyPDFLoader(PDF_PATH)
+    pages = loader.load()
+    splitter = RecursiveCharacterTextSplitter(
+        chunk_size=500,
+        chunk_overlap=50
+    )
+    docs = splitter.split_documents(pages)
+    embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    return vectorstore
+
+def search_curriculum(vectorstore, grade, topic, k=3):
+    if vectorstore is None:
+        return ""
+    query = f"{grade} {topic} 算数 指導要領"
+    results = vectorstore.similarity_search(query, k=k)
+    return "\n".join([doc.page_content for doc in results])
 
 # ===== 共通：AI生成 =====
 def generate(prompt, max_tokens=150):
@@ -58,6 +87,9 @@ a 1-on-1 online tutoring session.
 
 Student level: {grade_info}
 
+Relevant curriculum context from Japanese national curriculum:
+{curriculum}
+
 The student is working on: {lesson_topic}.
 The novice teacher needs expert guidance on how to respond to the \
 student's current situation in a helpful and encouraging way.
@@ -73,6 +105,9 @@ A novice teacher (1-2 years of experience) is preparing a lesson and needs \
 your expert guidance.
 
 Student level: {grade_info}
+
+Relevant curriculum context from Japanese national curriculum:
+{curriculum}
 
 Lesson topic: {topic}
 
@@ -130,6 +165,13 @@ def parse_sections(text):
         sections["approaches"] = text
     return sections
 
+# ===== RAG初期化 =====
+with st.spinner("指導要領データベースを準備しています..."):
+    vectorstore = build_vectorstore()
+
+if vectorstore is None:
+    st.warning("⚠️ 指導要領PDFが見つかりません。PDFなしモードで動作します。")
+
 # ===== UI：ヘッダー =====
 st.title("📐 算数教員サポート CoPilot")
 st.caption("教員向け　授業中リアルタイム支援 ＆ 授業準備アシスタント")
@@ -138,17 +180,16 @@ st.divider()
 # ===== タブ =====
 tab_a, tab_b = st.tabs([
     "💬 授業中サポート（リアルタイム）",
-    "📝 算数授業準備アシスタント"
+    "📝 授業準備アシスタント"
 ])
 
 # ==========================================
 # タブA：授業中リアルタイムサポート
 # ==========================================
 with tab_a:
-    st.markdown("#### 授業中に児童・生徒がつまずいたとき、次の一手を提案します")
+    st.markdown("#### 授業中に児童がつまずいたとき、次の一手を提案します")
     st.markdown("")
 
-    # 学年選択
     grade_a = st.radio(
         "🎓 学年",
         options=list(GRADE_INFO.keys()),
@@ -157,7 +198,6 @@ with tab_a:
         key="grade_a"
     )
 
-    # 単元入力
     lesson_topic = st.text_input(
         "📚 単元・テーマ",
         placeholder="例：わり算の導入、分数のたし算、割合と百分率",
@@ -185,6 +225,7 @@ with tab_a:
     if st.button("💡 提案を生成する", type="primary",
                  disabled=not lesson_topic, key="btn_a"):
         with st.spinner("AIが提案を生成しています..."):
+
             rows = []
             for line in conversation_input.strip().split("\n"):
                 if ": " in line:
@@ -199,10 +240,16 @@ with tab_a:
             df_anon = deidentify(df, tutor_name, student_name)
             c_h = format_conversation(df_anon)
 
+            # 指導要領から関連箇所を取得
+            curriculum = search_curriculum(
+                vectorstore, grade_a, lesson_topic
+            )
+
             responses = []
             for strategy in STRATEGIES:
                 prompt = REALTIME_TEMPLATE.format(
                     grade_info=GRADE_INFO[grade_a],
+                    curriculum=curriculum if curriculum else "Not available.",
                     lesson_topic=lesson_topic,
                     z=strategy.lower(),
                     c_h=c_h
@@ -213,6 +260,11 @@ with tab_a:
         st.markdown(
             f"### 💜 Let's help the student!　（{grade_a}・{lesson_topic}）"
         )
+
+        if curriculum:
+            with st.expander("📖 参照した指導要領の内容"):
+                st.caption(curriculum)
+
         cols = st.columns(3)
         for i, (strategy, response) in enumerate(zip(STRATEGIES, responses)):
             with cols[i % 3]:
@@ -221,7 +273,7 @@ with tab_a:
 
         st.divider()
         st.caption(
-            "※ 提案は参考情報です。実際の授業では児童・生徒の実態に合わせて調整してください。"
+            "※ 提案は参考情報です。実際の授業では児童の実態に合わせて調整してください。"
         )
 
 # ==========================================
@@ -231,7 +283,6 @@ with tab_b:
     st.markdown("#### 単元・テーマを入力すると指導アイデアを3つの視点で生成します")
     st.markdown("")
 
-    # 学年選択
     grade_b = st.radio(
         "🎓 学年",
         options=list(GRADE_INFO.keys()),
@@ -240,7 +291,6 @@ with tab_b:
         key="grade_b"
     )
 
-    # 単元入力
     prep_topic = st.text_input(
         "📝 単元・テーマ",
         placeholder="例：かけ算の導入、分母の違う分数のたし算、速さと時間",
@@ -250,8 +300,15 @@ with tab_b:
     if st.button("📋 授業アイデアを生成する", type="primary",
                  disabled=not prep_topic, key="btn_b"):
         with st.spinner("指導アイデアを生成しています..."):
+
+            # 指導要領から関連箇所を取得
+            curriculum = search_curriculum(
+                vectorstore, grade_b, prep_topic
+            )
+
             prompt = PREP_TEMPLATE.format(
                 grade_info=GRADE_INFO[grade_b],
+                curriculum=curriculum if curriculum else "Not available.",
                 topic=prep_topic
             )
             raw = generate(prompt, max_tokens=1500)
@@ -259,6 +316,10 @@ with tab_b:
 
         st.divider()
         st.markdown(f"### 📐 {grade_b}・{prep_topic}　指導サポート")
+
+        if curriculum:
+            with st.expander("📖 参照した指導要領の内容"):
+                st.caption(curriculum)
 
         st.markdown("#### 🎯 指導アプローチ（3つのバリエーション）")
         st.info(sections["approaches"])
@@ -271,5 +332,5 @@ with tab_b:
 
         st.divider()
         st.caption(
-            "※ 提案は参考情報です。実際の授業では児童・生徒の実態に合わせて調整してください。"
+            "※ 提案は参考情報です。実際の授業では児童の実態に合わせて調整してください。"
         )
