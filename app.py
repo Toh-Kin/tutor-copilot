@@ -143,7 +143,9 @@ For each mistake:
 - Why students make this mistake
 
 ---
-Keep each section concise and immediately actionable for a novice teacher."""
+Keep each section concise and immediately actionable for a novice teacher.
+IMPORTANT: Write the entire response in Japanese. Use natural Japanese \
+suitable for elementary school teachers in Japan."""
 
 def parse_sections(text):
     sections = {"approaches": "", "questions": "", "mistakes": ""}
