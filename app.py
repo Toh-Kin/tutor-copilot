@@ -136,9 +136,11 @@ For each question:
 
 ## SECTION 3: Common Mistakes & How to Respond
 Identify exactly 3 common mistakes students make with this topic.
+CRITICAL: Each mistake's example, response, and explanation must be 
+internally consistent and directly related to each other.
 For each mistake:
-- What the student does wrong
-- Example of a wrong answer
+- What the student does wrong (be specific to this topic)
+- Example of a wrong answer (must match the mistake described)
 - How to respond WITHOUT giving away the answer
 - Why students make this mistake
 
