@@ -4,9 +4,9 @@
     "lesson_topic": "2.8A 2- and 3-Dimensional Shapes",
     "note": "From Bridge dataset (Wang et al., 2024) - rosewang2008/bridge",
     "c_h": [
-      {"user": "tutor", "text": "i meant 5 sides"},
+      {"user": "tutor",   "text": "i meant 5 sides"},
       {"user": "student", "text": "That is okay!"},
-      {"user": "tutor", "text": "What is the name of the 5 sided shape?"},
+      {"user": "tutor",   "text": "What is the name of the 5 sided shape?"},
       {"user": "student", "text": "hexagon"}
     ]
   },
@@ -15,11 +15,11 @@
     "lesson_topic": "Fractions - Understanding with division",
     "note": "From Bridge dataset (Wang et al., 2024) - rosewang2008/bridge",
     "c_h": [
-      {"user": "tutor", "text": "Let's look at this fraction problem together."},
+      {"user": "tutor",   "text": "Let's look at this fraction problem together."},
       {"user": "student", "text": "I don't understand how to find the fraction."},
-      {"user": "tutor", "text": "What information do we have in the problem?"},
+      {"user": "tutor",   "text": "What information do we have in the problem?"},
       {"user": "student", "text": "There are 8 pieces and we need to find the unit rate."},
-      {"user": "tutor", "text": "Great start! So what operation might help us find the unit rate?"},
+      {"user": "tutor",   "text": "Great start! So what operation might help us find the unit rate?"},
       {"user": "student", "text": "Division?"}
     ]
   },
@@ -28,11 +28,11 @@
     "lesson_topic": "2.BA Understanding with fractions and division",
     "note": "From Bridge dataset (Wang et al., 2024) - rosewang2008/bridge",
     "c_h": [
-      {"user": "tutor", "text": "That's okay! When you're back, let's review how the quotient and divisor can help us find the missing dividend in division."},
+      {"user": "tutor",   "text": "That's okay! When you're back, let's review how the quotient and divisor can help us find the missing dividend in division."},
       {"user": "student", "text": "okay"},
-      {"user": "tutor", "text": "We can continue our lesson. Just let me know when you're ready."},
+      {"user": "tutor",   "text": "We can continue our lesson. Just let me know when you're ready."},
       {"user": "student", "text": "im ready"},
-      {"user": "tutor", "text": "Great! To find the missing dividend, we multiply the quotient and divisor together."},
+      {"user": "tutor",   "text": "Great! To find the missing dividend, we multiply the quotient and divisor together."},
       {"user": "student", "text": "ok"}
     ]
   },
@@ -41,13 +41,28 @@
     "lesson_topic": "Ratios and proportional relationships",
     "note": "Reconstructed sample based on Bridge dataset structure (Wang et al., 2024)",
     "c_h": [
-      {"user": "tutor", "text": "Let's work on this ratio problem together."},
+      {"user": "tutor",   "text": "Let's work on this ratio problem together."},
       {"user": "student", "text": "I'm not sure what ratio means."},
-      {"user": "tutor", "text": "Good question. Can you tell me what two things we are comparing in this problem?"},
+      {"user": "tutor",   "text": "Good question. Can you tell me what two things we are comparing in this problem?"},
       {"user": "student", "text": "Apples and oranges?"},
-      {"user": "tutor", "text": "Exactly! So if we have 3 apples and 5 oranges, what do you think the ratio of apples to oranges is?"},
+      {"user": "tutor",   "text": "Exactly! So if we have 3 apples and 5 oranges, what do you think the ratio of apples to oranges is?"},
       {"user": "student", "text": "Is it 3 to 5?"}
     ]
+  },
+  {
+    "id": 5,
+    "lesson_topic": "Multiplication - Equal groups concept",
+    "note": "Reconstructed sample based on Bridge dataset structure (Wang et al., 2024)",
+    "c_h": [
+      {"user": "tutor",   "text": "Let's practice multiplication. What is 4 times 3?"},
+      {"user": "student", "text": "Is it 14?"},
+      {"user": "tutor",   "text": "Let's think about it differently. If you have 4 groups of 3 apples, how many apples total?"},
+      {"user": "student", "text": "I counted... 12?"},
+      {"user": "tutor",   "text": "That's right! So 4 times 3 equals 12. Can you see the connection?"},
+      {"user": "student", "text": "Oh, multiplication is like adding the same number many times!"}
+    ]
+  }
+]
   },
   {
     "id": 5,
