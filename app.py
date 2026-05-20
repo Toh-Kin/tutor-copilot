@@ -96,7 +96,8 @@ student's current situation in a helpful and encouraging way.
 Adjust your language complexity to match the student's grade level.
 In your response, please {z}.
 {c_h}
-teacher (maximum one sentence):"""
+IMPORTANT: Write your response in Japanese.
+teacher (最大1文、日本語で):"""
 
 # ===== タブB用：テンプレート =====
 PREP_TEMPLATE = """You are an expert Japanese elementary school math educator \
