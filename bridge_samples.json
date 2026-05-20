@@ -4,8 +4,8 @@
     "lesson_topic": "2.8A 2- and 3-Dimensional Shapes",
     "note": "From Bridge dataset (Wang et al., 2024) - rosewang2008/bridge",
     "c_h": [
-      {"user": "student",   "text": "i meant 5 sides"},
-      {"user": "tutor", "text": "That is okay!"},
+      {"user": "student", "text": "i meant 5 sides"},
+      {"user": "tutor",   "text": "That is okay!"},
       {"user": "tutor",   "text": "What is the name of the 5 sided shape?"},
       {"user": "student", "text": "hexagon"}
     ]
@@ -59,21 +59,6 @@
       {"user": "tutor",   "text": "Let's think about it differently. If you have 4 groups of 3 apples, how many apples total?"},
       {"user": "student", "text": "I counted... 12?"},
       {"user": "tutor",   "text": "That's right! So 4 times 3 equals 12. Can you see the connection?"},
-      {"user": "student", "text": "Oh, multiplication is like adding the same number many times!"}
-    ]
-  }
-]
-  },
-  {
-    "id": 5,
-    "lesson_topic": "Multiplication - Equal groups concept",
-    "note": "Reconstructed sample based on Bridge dataset structure (Wang et al., 2024)",
-    "c_h": [
-      {"user": "tutor", "text": "Let's practice multiplication. What is 4 times 3?"},
-      {"user": "student", "text": "Is it 14?"},
-      {"user": "tutor", "text": "Let's think about it differently. If you have 4 groups of 3 apples, how many apples total?"},
-      {"user": "student", "text": "I counted... 12?"},
-      {"user": "tutor", "text": "That's right! So 4 times 3 equals 12. Can you see the connection?"},
       {"user": "student", "text": "Oh, multiplication is like adding the same number many times!"}
     ]
   }
