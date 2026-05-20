@@ -58,8 +58,6 @@ teacher (最大1文、日本語で):"""
 
 # ===== テンプレートC：Bridge論文テンプレート再現版 =====
 # 出典：Wang et al. (2025) Section 3 / github.com/rosewang2008/tutor-copilot
-# 論文のオリジナルテンプレート文言をそのまま使用
-# ※ Think-Aloudデータ・学習済みモデルは含まない
 BRIDGE_TEMPLATE = """You are an experienced elementary math teacher \
 and you are going to respond to a student's mistake \
 in a useful and caring way!!
@@ -119,6 +117,7 @@ Keep each section concise and immediately actionable for a novice teacher.
 IMPORTANT: Write the entire response in Japanese. Use natural Japanese \
 suitable for elementary school teachers in Japan."""
 
+
 # ===== RAG：指導要領DB =====
 @st.cache_resource
 def build_vectorstore():
@@ -133,12 +132,14 @@ def build_vectorstore():
     embeddings = OpenAIEmbeddings(api_key=OPENAI_API_KEY)
     return FAISS.from_documents(docs, embeddings)
 
+
 def search_curriculum(vectorstore, grade, topic, k=3):
     if vectorstore is None:
         return ""
     query = f"{grade} {topic} 算数 指導要領"
     results = vectorstore.similarity_search(query, k=k)
     return "\n".join([doc.page_content for doc in results])
+
 
 # ===== Bridgeデータセット読み込み =====
 @st.cache_resource
@@ -148,17 +149,18 @@ def load_bridge_samples():
     with open(BRIDGE_DATA_PATH, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def format_bridge_conversation(c_h_list):
-    """Bridge形式の会話リストを文字列に変換"""
     return "\n".join(
         [f"{row['user']}: {row['text']}" for row in c_h_list]
     )
 
+
 def bridge_to_display(c_h_list):
-    """Bridge会話を表示用テキストに変換"""
     return "\n".join(
         [f"{row['user']}: {row['text']}" for row in c_h_list]
     )
+
 
 # ===== 共通：AI生成 =====
 def generate(prompt, max_tokens=150):
@@ -169,6 +171,7 @@ def generate(prompt, max_tokens=150):
         max_tokens=max_tokens
     )
     return response.choices[0].message.content
+
 
 # ===== 匿名化・フォーマット =====
 def deidentify(df, tutor_name, student_name):
@@ -187,10 +190,12 @@ def deidentify(df, tutor_name, student_name):
     )
     return df
 
+
 def format_conversation(df):
     return "\n".join(
         df.apply(lambda x: f"{x['user']}: {x['text']}", axis=1)
     )
+
 
 def parse_conversation(conversation_input, tutor_name, student_name):
     rows = []
@@ -204,6 +209,7 @@ def parse_conversation(conversation_input, tutor_name, student_name):
     df_anon = deidentify(df, tutor_name, student_name)
     c_h = format_conversation(df_anon)
     return df_anon, c_h
+
 
 def parse_sections(text):
     sections = {"approaches": "", "questions": "", "mistakes": ""}
@@ -226,6 +232,63 @@ def parse_sections(text):
         sections["approaches"] = text
     return sections
 
+
+# ===== 比較結果の表示（共通関数）← タブより前に定義 =====
+def show_comparison(
+    grade, topic, curriculum,
+    responses_orig, responses_bridge,
+    is_bridge_data=False
+):
+    st.divider()
+    st.markdown(f"### 🔬 比較結果　{grade}・{topic}")
+
+    if is_bridge_data:
+        st.info(
+            "📂 Bridge論文データセット（米国・英語）を使用した比較です。"
+            "日本語版は日本の学習指導要領を参照しますが、"
+            "会話は英語のままです。"
+        )
+
+    if curriculum:
+        with st.expander("📖 日本語版が参照した指導要領の内容"):
+            st.caption(curriculum)
+
+    for i, strategy in enumerate(STRATEGIES):
+        st.markdown(f"---\n#### {strategy}")
+        col_orig, col_bridge = st.columns(2)
+
+        with col_orig:
+            st.markdown(
+                "🇯🇵 **日本語版**（指導要領参照・学年別・日本語出力）"
+            )
+            st.info(responses_orig[i])
+
+        with col_bridge:
+            st.markdown(
+                "📄 **Bridge論文テンプレート再現版**（Wang et al., 2025）"
+            )
+            st.warning(responses_bridge[i])
+
+    st.divider()
+    st.markdown("#### 比較のポイント")
+    st.markdown(
+        "| 観点 | 確認すること |\n"
+        "|------|------------|\n"
+        "| **言語** | 日本語版は日本語か・Bridge版は英語か |\n"
+        "| **学年適合性** | 日本語版の言葉レベルは学年に合っているか |\n"
+        "| **指導要領の反映** | 日本語版は指導要領の内容を踏まえているか |\n"
+        "| **教育的質** | どちらが「考えさせる」提案になっているか |\n"
+        "| **文化的文脈** | 米国データに日本版がどう対応しているか |"
+    )
+    st.caption(
+        "出典（Bridge版テンプレート・データ）："
+        'Wang et al. (2025) "Tutor CoPilot: A Human-AI Approach '
+        'for Scaling Real-Time Expertise" arXiv:2410.03017v2 / '
+        "Wang et al. (2024) NAACL「Bridge」/ "
+        "github.com/rosewang2008/bridge"
+    )
+
+
 # ===== 初期化 =====
 with st.spinner("指導要領データベースを準備しています..."):
     vectorstore = build_vectorstore()
@@ -246,16 +309,15 @@ st.caption(
 st.divider()
 
 # ===== セッションステート初期化 =====
-if "shared_grade_index" not in st.session_state:
-    st.session_state.shared_grade_index = 4
-if "shared_topic" not in st.session_state:
-    st.session_state.shared_topic = ""
-if "shared_tutor" not in st.session_state:
-    st.session_state.shared_tutor = "Tanaka Sensei"
-if "shared_student" not in st.session_state:
-    st.session_state.shared_student = "Yuki"
-if "shared_convo" not in st.session_state:
-    st.session_state.shared_convo = ""
+for key, default in {
+    "shared_grade_index": 4,
+    "shared_topic": "",
+    "shared_tutor": "Tanaka Sensei",
+    "shared_student": "Yuki",
+    "shared_convo": "",
+}.items():
+    if key not in st.session_state:
+        st.session_state[key] = default
 
 # ===== タブ =====
 tab_a, tab_b, tab_c = st.tabs([
@@ -265,7 +327,7 @@ tab_a, tab_b, tab_c = st.tabs([
 ])
 
 # ==========================================
-# タブA：授業中サポート（日本語・指導要領版）
+# タブA：授業中サポート
 # ==========================================
 with tab_a:
     st.markdown(
@@ -297,7 +359,7 @@ with tab_a:
     col1, col2 = st.columns(2)
     with col1:
         tutor_name_a = st.text_input(
-            "チューターの名前",
+            "教員の名前",
             value=st.session_state.shared_tutor,
             key="tutor_a"
         )
@@ -441,17 +503,18 @@ with tab_b:
         st.divider()
         st.caption(
             "※ 提案は参考情報です。"
-            "実際の授業では教員の判断で調整してください。"
+            "実際の授業では教員の判断・児童の実態に合わせて調整してください。"
         )
 
 # ==========================================
 # タブC：Bridge論文データとの比較
 # ==========================================
 with tab_c:
-    st.markdown("#### 同じ会話・同じテンプレートで2つの実装を比較します")
+    st.markdown(
+        "#### 同じ会話・同じテンプレートで2つの実装を比較します"
+    )
     st.markdown("")
 
-    # 2種類の比較モードを選択
     compare_mode = st.radio(
         "比較モードを選択",
         options=[
@@ -499,7 +562,7 @@ with tab_c:
             )
             st.markdown(
                 f"**チューター：** {tutor_c}　　"
-                f"**児童：** {student_c}"
+                f"**生徒：** {student_c}"
             )
             if convo_c:
                 st.text(convo_c)
@@ -553,7 +616,7 @@ with tab_c:
                         generate(prompt_bridge, max_tokens=120)
                     )
 
-            _show_comparison(
+            show_comparison(
                 grade_c, topic_c, curriculum,
                 responses_orig, responses_bridge
             )
@@ -574,7 +637,6 @@ with tab_c:
                 "GitHubに追加してください。"
             )
         else:
-            # サンプル選択
             sample_options = {
                 f"サンプル {s['id']}：{s['lesson_topic']}": s
                 for s in bridge_samples
@@ -586,7 +648,6 @@ with tab_c:
             )
             selected = sample_options[selected_label]
 
-            # 選択されたサンプルの会話を表示
             with st.expander(
                 "📋 選択したBridgeデータの会話内容", expanded=True
             ):
@@ -596,7 +657,6 @@ with tab_c:
                 st.caption(f"**データ出典：** {selected['note']}")
                 st.text(bridge_to_display(selected["c_h"]))
 
-            # 日本語版用の学年選択
             st.markdown(
                 "🇯🇵 **日本語版に適用する学年を選択**"
                 "（Bridge版は学年指定なし）"
@@ -617,7 +677,6 @@ with tab_c:
                 with st.spinner(
                     "Bridge論文データで2つの実装を比較しています..."
                 ):
-                    # Bridge会話データをフォーマット
                     c_h_bridge = format_bridge_conversation(
                         selected["c_h"]
                     )
@@ -629,7 +688,6 @@ with tab_c:
                     responses_orig, responses_bridge = [], []
 
                     for strategy in STRATEGIES:
-                        # 日本語版（指導要領・学年あり）
                         prompt_orig = ORIGINAL_TEMPLATE.format(
                             grade_info=GRADE_INFO[grade_c2],
                             curriculum=(
@@ -644,7 +702,6 @@ with tab_c:
                             generate(prompt_orig, max_tokens=120)
                         )
 
-                        # Bridge論文テンプレート版
                         prompt_bridge = BRIDGE_TEMPLATE.format(
                             lesson_topic=topic_bridge,
                             z=strategy.lower(),
@@ -654,66 +711,8 @@ with tab_c:
                             generate(prompt_bridge, max_tokens=120)
                         )
 
-                _show_comparison(
+                show_comparison(
                     grade_c2, topic_bridge, curriculum,
                     responses_orig, responses_bridge,
                     is_bridge_data=True
                 )
-
-
-def _show_comparison(
-    grade, topic, curriculum,
-    responses_orig, responses_bridge,
-    is_bridge_data=False
-):
-    """比較結果の表示（共通関数）"""
-    st.divider()
-    st.markdown(f"### 🔬 比較結果　{grade}・{topic}")
-
-    if is_bridge_data:
-        st.info(
-            "📂 Bridge論文データセット（米国・英語）を使用した比較です。"
-            "日本語版は日本の学習指導要領を参照しますが、"
-            "会話は英語のままです。"
-        )
-
-    if curriculum:
-        with st.expander("📖 日本語版が参照した指導要領の内容"):
-            st.caption(curriculum)
-
-    for i, strategy in enumerate(STRATEGIES):
-        st.markdown(f"---\n#### {strategy}")
-        col_orig, col_bridge = st.columns(2)
-
-        with col_orig:
-            st.markdown(
-                "🇯🇵 **日本語版**"
-                "（指導要領参照・学年別・日本語出力）"
-            )
-            st.info(responses_orig[i])
-
-        with col_bridge:
-            st.markdown(
-                "📄 **Bridge論文テンプレート再現版**"
-                "（Wang et al., 2025）"
-            )
-            st.warning(responses_bridge[i])
-
-    st.divider()
-    st.markdown("#### 比較のポイント")
-    st.markdown(
-        "| 観点 | 確認すること |\n"
-        "|------|------------|\n"
-        "| **言語** | 日本語版は日本語か・Bridge版は英語か |\n"
-        "| **学年適合性** | 日本語版の言葉レベルは学年に合っているか |\n"
-        "| **指導要領の反映** | 日本語版は指導要領の内容を踏まえているか |\n"
-        "| **教育的質** | どちらが「考えさせる」提案になっているか |\n"
-        "| **文化的文脈** | 米国データに日本版がどう対応しているか |"
-    )
-    st.caption(
-        "出典（Bridge版テンプレート・データ）："
-        'Wang et al. (2025) "Tutor CoPilot: A Human-AI Approach '
-        'for Scaling Real-Time Expertise" arXiv:2410.03017v2 / '
-        "Wang et al. (2024) NAACL「Bridge」/ "
-        "github.com/rosewang2008/bridge"
-    )
