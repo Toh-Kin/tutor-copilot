@@ -472,7 +472,7 @@ with tab_b:
         disabled=not prep_topic,
         key="btn_b"
     ):
-        with st.spinner("専門家レベルの指導アイデアを生成しています..."):
+        with st.spinner("レベルの指導アイデアを生成しています..."):
             curriculum = search_curriculum(
                 vectorstore, grade_b, prep_topic
             )
