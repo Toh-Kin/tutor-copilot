@@ -4,8 +4,8 @@
     "lesson_topic": "2.8A 2- and 3-Dimensional Shapes",
     "note": "From Bridge dataset (Wang et al., 2024) - rosewang2008/bridge",
     "c_h": [
-      {"user": "tutor",   "text": "i meant 5 sides"},
-      {"user": "student", "text": "That is okay!"},
+      {"user": "student",   "text": "i meant 5 sides"},
+      {"user": "tutor", "text": "That is okay!"},
       {"user": "tutor",   "text": "What is the name of the 5 sided shape?"},
       {"user": "student", "text": "hexagon"}
     ]
