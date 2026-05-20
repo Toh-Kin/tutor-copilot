@@ -3,9 +3,22 @@ import openai
 import pandas as pd
 
 # ===== 設定 =====
-st.set_page_config(page_title="Tutor CoPilot", page_icon="🌟", layout="centered")
+st.set_page_config(
+    page_title="Tutor CoPilot",
+    page_icon="🌟",
+    layout="centered"
+)
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+
+GRADE_INFO = {
+    "小学1年": "Grade 1 (age 6-7): Numbers up to 100, addition and subtraction within 20. Use very simple words and concrete examples like fingers or physical objects.",
+    "小学2年": "Grade 2 (age 7-8): Multiplication tables 2-9, addition and subtraction within 1000. Use arrays and equal groups as examples.",
+    "小学3年": "Grade 3 (age 8-9): Division, basic fractions (1/2, 1/3), large numbers up to 10000. Connect new concepts to multiplication facts.",
+    "小学4年": "Grade 4 (age 9-10): Multi-digit multiplication and division, fractions with same denominator, decimals, area of rectangles.",
+    "小学5年": "Grade 5 (age 10-11): Fractions with different denominators, ratios, percentages, area of triangles and parallelograms, volume.",
+    "小学6年": "Grade 6 (age 11-12): Ratios and rates, proportional relationships, area of circles, volume of cylinders, introduction to algebraic thinking.",
+}
 
 STRATEGIES = [
     "Ask a question",
@@ -18,11 +31,14 @@ STRATEGIES = [
 
 TEMPLATE = """You are an experienced Japanese elementary school math teacher \
 supporting a novice teacher (1-2 years of experience) who is conducting \
-a 1-on-1 online tutoring session with a 5th grade student.
+a 1-on-1 online tutoring session.
+
+Student level: {grade_info}
 
 The student is working on: {lesson_topic}.
 The novice teacher needs expert guidance on how to respond to the \
 student's current situation in a helpful and encouraging way.
+Adjust your language complexity to match the student's grade level.
 In your response, please {z}.
 {c_h}
 teacher (maximum one sentence):"""
@@ -52,33 +68,46 @@ def generate(prompt):
 
 # ===== UI =====
 st.title("🌟 Tutor CoPilot")
-st.caption("算数・小学5年生　若手教員サポートデモ")
+st.caption("算数　教員リアルタイムサポート")
 st.divider()
 
-lesson_topic = st.text_input(
-    "📚 授業トピック（英語）",
-    value="Ratios and percentages using fractions and decimals (Grade 5)"
+# 学年選択
+grade = st.radio(
+    "🎓 学年を選択",
+    options=list(GRADE_INFO.keys()),
+    horizontal=True,
+    index=4  # デフォルト：小学5年
 )
 
+# 単元入力
+lesson_topic = st.text_input(
+    "📚 単元・テーマ",
+    placeholder="例：わり算の導入、分数のたし算、割合と百分率"
+)
+
+st.divider()
 st.markdown("**💬 会話を入力**")
 
-tutor_name   = st.text_input("チューターの名前", value="Tanaka Sensei")
-student_name = st.text_input("生徒の名前",       value="Yuki")
+col1, col2 = st.columns(2)
+with col1:
+    tutor_name = st.text_input("チューターの名前", value="Tanaka Sensei")
+with col2:
+    student_name = st.text_input("生徒の名前", value="Yuki")
 
 conversation_input = st.text_area(
     "会話（「名前: 発言」の形式で入力）",
     height=200,
-    value="""Tanaka Sensei: Good morning! Today we are working on ratios. Are you ready?
+    placeholder="""例：
+Tanaka Sensei: Today we are working on fractions. Are you ready?
 Yuki: Yes!
-Tanaka Sensei: In a class of 30 students, 18 like soccer. What is the ratio of soccer fans to the whole class?
-Yuki: Umm... is it 18 divided by 30?
-Tanaka Sensei: That is a good start! Can you calculate that?
-Yuki: 0.06?"""
+Tanaka Sensei: What is 1/2 + 1/3?
+Yuki: 2/5?"""
 )
 
-if st.button("💡 提案を生成する", type="primary"):
+if st.button("💡 提案を生成する", type="primary", disabled=not (topic := lesson_topic)):
     with st.spinner("AIが提案を生成しています..."):
 
+        # 会話をDataFrameに変換
         rows = []
         for line in conversation_input.strip().split("\n"):
             if ": " in line:
@@ -90,12 +119,16 @@ if st.button("💡 提案を生成する", type="primary"):
             st.stop()
 
         df = pd.DataFrame(rows)
+
+        # 匿名化
         df_anon = deidentify(df, tutor_name, student_name)
         c_h = format_conversation(df_anon)
 
+        # 各ストラテジーで生成
         responses = []
         for strategy in STRATEGIES:
             prompt = TEMPLATE.format(
+                grade_info=GRADE_INFO[grade],
                 lesson_topic=lesson_topic,
                 z=strategy.lower(),
                 c_h=c_h
@@ -103,11 +136,16 @@ if st.button("💡 提案を生成する", type="primary"):
             response = generate(prompt)
             responses.append(response)
 
+    # パネル表示
     st.divider()
-    st.markdown("### 💜 Let's help the student!")
+    st.markdown(f"### 💜 Let's help the student!　（{grade}・{lesson_topic}）")
 
     cols = st.columns(3)
     for i, (strategy, response) in enumerate(zip(STRATEGIES, responses)):
         with cols[i % 3]:
             st.markdown(f"**{strategy}**")
             st.info(response)
+            st.markdown("")
+
+    st.divider()
+    st.caption("※ 提案は参考情報です。実際の授業では児童・生徒の実態に合わせて調整してください。")
