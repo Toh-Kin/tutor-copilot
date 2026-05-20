@@ -15,7 +15,7 @@ st.set_page_config(
 )
 
 OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-PDF_PATH = "指導要領.pdf"  # ← GitHubにアップロードしたPDFのファイル名に合わせる
+PDF_PATH = "1387017_004.pdf"  # ← GitHubにアップロードしたPDFのファイル名に合わせる
 
 GRADE_INFO = {
     "小学1年": "Grade 1 (age 6-7): Numbers up to 100, addition and subtraction within 20. Use very simple words and concrete examples like fingers or physical objects.",
