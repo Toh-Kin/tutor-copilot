@@ -127,4 +127,4 @@ if st.button("💡 授業アイデアを生成する", type="primary", disabled=
     st.warning(sections["mistakes"].replace("3: Common Mistakes & How to Respond", "").strip())
 
     st.divider()
-    st.caption("※ 提案は参考情報です。実際の授業では児童・生徒の実態に合わせて調整してください。")
+    st.caption("※ 提案は参考情報です。実際の授業では児童の実態に合わせて調整してください。")
